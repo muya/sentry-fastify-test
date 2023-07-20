@@ -1,13 +1,30 @@
 const Sentry = require("@sentry/node");
 
 Sentry.init({
-  dsn: "",
+  dsn: "sentry-dsn",
   instrumenter: "otel",
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
   tracesSampleRate: 1.0,
-  debug: true
+  debug: true,
+  // un-comment to try out the patched response
+  // beforeSendTransaction: (event, hint) => {
+  //   const traceContext = event.contexts?.trace
+  //   if (traceContext !== undefined) {
+  //     const traceContextData = traceContext.data
+
+  //     if (traceContextData !== undefined) {
+  //       const parsedTCD = traceContextData
+  //       event.request = {
+  //         url: parsedTCD['http.url'],
+  //         method: parsedTCD['http.method']
+  //       }
+
+  //       // return event
+  //     }
+  //   return event
+  // }
 });
 
 const {
@@ -62,13 +79,12 @@ fastify.get("/", (request, reply) => {
   reply.send({ hello: "world" });
 });
 
-fastify.get("/api", async (request, reply) => {
-  const res = await axios.get("https://catfact.ninja/fact");
-  reply.send(res.data);
+fastify.get("/with-patched-sentry", (request, reply) => {
+  reply.send({ hello: "world" });
 });
 
 // Run the server!
-fastify.listen({ port: 3000 }, (err, address) => {
+fastify.listen({ port: 3050 }, (err, address) => {
   if (err) {
     fastify.log.error(err);
     process.exit(1);
